@@ -46,3 +46,54 @@ exports.getHTML = function(options, callback, errCallback) {
     errCallback && errCallback(e);
   });
 };
+
+exports.postData = function(options1, callback, errCallback) {
+  var postData = {
+    callCount: 1,
+    scriptSessionId: "${scriptSessionId}187",
+    "c0-scriptName": "BlogBeanNew",
+    "c0-methodName": "getBlogs",
+    "c0-id": 0,
+    "c0-param0": "number:171396050",
+    "c0-param1": "number:20",
+    "c0-param2": "number:10",
+    "batchId": 816385
+  };
+  var postString = JSON.stringify(postData);
+
+  var options = {
+    hostname: 'api.blog.163.com',
+    port: 80,
+    path: '/aico77/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/plain',
+      'Content-Length': postString.length
+    }
+  };
+
+  var req = http.request(options, function(res) {
+    console.log('STATUS: ' + res.statusCode);
+    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    res.setEncoding('utf8');
+    var chunks = [];
+    res.on('data', function (chunk) {
+      console.log('BODY: ' + chunk);
+      chunks.push(chunk);
+    });
+    res.on('end', function() {
+      callback && callback(chunks);
+      console.log('No more data in response.')
+    })
+  });
+
+  req.on('error', function(e) {
+    console.log('problem with request: ' + e.message);
+    errCallback && errCallback(e);
+  });
+  
+  // write data to request body
+  req.write(postString);
+  req.end();
+
+};
