@@ -1,4 +1,5 @@
 var http = require('http'), https = require('https'), url = require('url');
+var zlib = require("zlib");
 var iconv = require('iconv-lite'); // npm install iconv-lite
  
 /**
@@ -57,9 +58,15 @@ exports.postData = function(options1, callback, errCallback) {
     "c0-param0": "number:171396050",
     "c0-param1": "number:20",
     "c0-param2": "number:10",
-    "batchId": 816385
+    "batchId": 307850
   };
-  var postString = JSON.stringify(postData);
+  
+  var postDataArr = [];
+  for (var prop in postData) {
+    postDataArr.push(new String(prop) + '=' + postData[prop]);
+  }
+  
+  var postDataStr = postDataArr.join('\n');
 
   var options = {
     hostname: 'api.blog.163.com',
@@ -67,24 +74,39 @@ exports.postData = function(options1, callback, errCallback) {
     path: '/aico77/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr',
     method: 'POST',
     headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36',
+      'Referer': 'http://api.blog.163.com/crossdomain.html?t=20100205',
+      'Accept': '*/*',
+      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Language': 'en-US,en;q=0.8,zh-CN;q=0.6,zh;q=0.4,zh-TW;q=0.2,es;q=0.2',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'DNT': '1',
+      'Host': 'api.blog.163.com',
+      'Origin': 'http://api.blog.163.com',
+      'Pragma': 'no-cache',
       'Content-Type': 'text/plain',
-      'Content-Length': postString.length
+      'Content-Length': postDataStr.length
     }
   };
 
   var req = http.request(options, function(res) {
     console.log('STATUS: ' + res.statusCode);
     console.log('HEADERS: ' + JSON.stringify(res.headers));
-    res.setEncoding('utf8');
+
     var chunks = [];
-    res.on('data', function (chunk) {
-      console.log('BODY: ' + chunk);
-      chunks.push(chunk);
+    
+    // pipe the response into the gunzip to decompress
+    var gunzip = zlib.createGunzip();            
+    res.pipe(gunzip);
+
+    gunzip.on('data', function (chunk) {
+      // decompression chunk ready, add it to the buffer
+      chunks.push(chunk.toString());
     });
-    res.on('end', function() {
-      callback && callback(chunks);
-      console.log('No more data in response.')
-    })
+    gunzip.on('end', function() {
+      callback && callback(chunks.join(''));
+    });
   });
 
   req.on('error', function(e) {
@@ -93,7 +115,6 @@ exports.postData = function(options1, callback, errCallback) {
   });
   
   // write data to request body
-  req.write(postString);
+  req.write(postDataStr);
   req.end();
-
 };
