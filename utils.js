@@ -48,7 +48,7 @@ exports.getHTML = function(options, callback, errCallback) {
   });
 };
 
-exports.postData = function(page, callback, errCallback) {
+exports.postData = function(opts, callback, errCallback) {
   var postData = {
     callCount: 1,
     scriptSessionId: "${scriptSessionId}187",
@@ -56,7 +56,7 @@ exports.postData = function(page, callback, errCallback) {
     "c0-methodName": "getBlogs",
     "c0-id": 0,
     "c0-param0": "number:171396050",
-    "c0-param1": "number:" + 10 * page,
+    "c0-param1": "number:" + 10 * opts.page,
     "c0-param2": "number:10",
     "batchId": 307850
   };
@@ -69,9 +69,8 @@ exports.postData = function(page, callback, errCallback) {
   var postDataStr = postDataArr.join('\n');
 
   var options = {
-    hostname: 'api.blog.163.com',
-    port: 80,
-    path: '/aico77/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr',
+    hostname: opts.hostname,
+    path: opts.path,
     method: 'POST',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36',
@@ -91,8 +90,8 @@ exports.postData = function(page, callback, errCallback) {
   };
 
   var req = http.request(options, function(res) {
-    console.log('STATUS: ' + res.statusCode);
-    console.log('HEADERS: ' + JSON.stringify(res.headers));
+    //console.log('STATUS: ' + res.statusCode);
+    //console.log('HEADERS: ' + JSON.stringify(res.headers));
 
     var chunks = [];
     
