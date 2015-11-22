@@ -5,11 +5,23 @@ var count = 0; // How many articles in the blog?
 var pageSize = 10; // How many articles in each page? Defaults to 10.
 var pages = 0; // How many pages are there in the blog?
 
+console.log('process.argv:', process.argv);
+if (!process.argv[2]) {
+  console.error("Blog name must be passed.");
+  return ;
+}
+
+// TODO : verification the blog name.
+var hostname = '{username}.blog.163.com'.replace('{username}', process.argv[2]);
+
 var options = {
-  hostname: 'aico77.blog.163.com',
+  hostname: hostname,
   path: '/blog',
   encoding: 'GBK'
 };
+
+var apiURL = 'api.blog.163.com';
+var apiGetBlogPath = '/{username}/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr'.replace('{username}', process.argv[2]);
 
 var countTextFile = './data/count.txt';
 
@@ -40,7 +52,11 @@ utils.getHTML(options, function(res) {
 });
 
 function getArticlesByPage(page) {
-  utils.postData(page, function(res){
+  utils.postData({
+    hostname: hostname,
+    path: apiGetBlogPath,
+    page: page
+  }, function(res){
     console.log("post ok:", res);
     getBlogLinks(res);
   }, function(e) {
@@ -63,7 +79,7 @@ function getArticleByLink(url) {
   if (!urlParts || !urlParts[1]) return ;
   url = urlParts[1];
   var options = {
-    hostname: 'aico77.blog.163.com',
+    hostname: hostname,
     path: '/' + url,
     encoding: 'GBK'
   };
