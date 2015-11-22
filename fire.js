@@ -71,26 +71,23 @@ function getArticleByLink(url) {
   var blogId = url.split('/').pop();
   blogId = blogId.substring(0, blogId.length -2);
   console.log('blogId:', blogId);
-  var blogFile = './data/' + blogId + '.json';
+  
   utils.getHTML(options, function(res) {
-    fs.exists(blogFile, function (exists) {
-      if(!exists) {
-        console.log('File ', blogFile, ' not exits, create it!');
-        var articleObj = {};
-        var t1 = res.split('<textarea name="js">')[1];
-        if( !t1) {
-          console.log('t1 undefined:', url);
-          return;
-        }
-        var t2 = t1.split('</textarea>')[0].trim(),
-            t3 = t2.substring(7);
-            
-        eval('articleObj = ' + t3);
-        fs.writeFile(blogFile, JSON.stringify(articleObj), function(err) {
-          if (err) throw err;
-          console.log('saved：' + blogFile);
-        });    
-      }
+    var articleObj = {};
+    var t1 = res.split('<textarea name="js">')[1];
+    if( !t1) {
+      console.log('t1 undefined:', url);
+      return;
+    }
+    var t2 = t1.split('</textarea>')[0].trim(),
+        t3 = t2.substring(7);
+        
+    eval('articleObj = ' + t3);
+    var blogFile = './data/' + articleObj.publishTime + '.json';
+    
+    fs.writeFile(blogFile, JSON.stringify(articleObj), function(err) {
+      if (err) throw err;
+      console.log('saved：' + blogFile);
     });
   }, function(e) {
     console.log('err:', e.message);
