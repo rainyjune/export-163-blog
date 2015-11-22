@@ -48,7 +48,7 @@ exports.getHTML = function(options, callback, errCallback) {
   });
 };
 
-exports.postData = function(options1, callback, errCallback) {
+exports.postData = function(page, callback, errCallback) {
   var postData = {
     callCount: 1,
     scriptSessionId: "${scriptSessionId}187",
@@ -56,7 +56,7 @@ exports.postData = function(options1, callback, errCallback) {
     "c0-methodName": "getBlogs",
     "c0-id": 0,
     "c0-param0": "number:171396050",
-    "c0-param1": "number:20",
+    "c0-param1": "number:" + 10 * page,
     "c0-param2": "number:10",
     "batchId": 307850
   };
