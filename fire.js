@@ -2,7 +2,7 @@ var utils = require('./utils.js');
 var fs = require('fs');
 
 var count = 0; // How many articles in the blog?
-var pageSize = 10; // How many articles in each page? Defaults to 10.
+var pageSize = 100; // How many articles in each page? 
 var pages = 0; // How many pages are there in the blog?
 
 if (!process.argv[2]) {
@@ -82,8 +82,8 @@ function getArticlesByPage(pageIndex) {
     "c0-methodName": "getBlogs",
     "c0-id": 0,
     "c0-param0": "number:" + userId,
-    "c0-param1": "number:" + (pageIndex ? 10 * (pageIndex + 1) : 0),
-    "c0-param2": "number:10",
+    "c0-param1": "number:" + (pageIndex * 10) ,
+    "c0-param2": "number:" + pageSize,
     "batchId": 307850
   };
   var postDataArr = [];
