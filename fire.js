@@ -42,10 +42,6 @@ utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) 
   eval("authorObj=" + authorMatch[1].trim());
   userId = authorObj.userId;
   
-  
-  //return;
-  //userId = overviewObj
-  
   count = overviewObj.c.map(function(category){
       return category.count;
     }).reduce(function(a, b) {
@@ -54,6 +50,7 @@ utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) 
   console.log('Blog posts:', count);
   
   pages = Math.ceil(count / pageSize);
+
   for ( var i = 0; i < pages; i++) {
     getArticlesByPage(i);
   }
@@ -117,19 +114,22 @@ function getArticlesByPage(pageIndex) {
       'Content-Length': postDataStr.length
     }
   }, function(res){
-    console.log("post ok:", res);
-    getBlogLinks(res);
+    //console.log("post ok:", res);
+    getBlogLinks(res, postData);
   }, function(e) {
     console.log('post err:', e.message);
   });
 }
 
-function getBlogLinks(htmlString) {
+function getBlogLinks(htmlString, postData) {
   var pattern = /permalink\s*=\s*"blog\/static\/\d+";/g;
   var links =  htmlString.match(pattern);
-  console.log('find match links:', links);
+  //console.log('find match links:', links);
   //return;
-  if (!links) return ;
+  if (!links) {
+    console.warn("Links not found.", postData);
+    return ;
+  }
   links.forEach(function(item, index){
     getArticleByLink(item);
   });
@@ -144,10 +144,10 @@ function getArticleByLink(url) {
     path: '/' + url,
     encoding: 'GBK'
   };
-  console.log('url:', url);
+  //console.log('url:', url);
   var blogId = url.split('/').pop();
   blogId = blogId.substring(0, blogId.length -2);
-  console.log('blogId:', blogId);
+  //console.log('blogId:', blogId);
   
   utils.get(options, function(res) {
     var articleObj = {};
@@ -164,7 +164,7 @@ function getArticleByLink(url) {
     
     fs.writeFile(blogFile, JSON.stringify(articleObj), function(err) {
       if (err) throw err;
-      console.log('saved：' + blogFile);
+      //console.log('saved：' + blogFile);
     });
   }, function(e) {
     console.log('err:', e.message, ' url:', hostname + '/' + url);
