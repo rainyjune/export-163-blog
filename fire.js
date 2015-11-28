@@ -137,7 +137,9 @@ function getBlogLinks(htmlString, postData) {
 
 function getArticleByLink(url) {
   var urlParts = url.match(/"(blog\/static\/\d+)";/);
-  if (!urlParts || !urlParts[1]) return ;
+  if (!urlParts || !urlParts[1]) {
+    return ;
+  }
   url = urlParts[1];
   var options = {
     hostname: hostname,
@@ -150,6 +152,12 @@ function getArticleByLink(url) {
   //console.log('blogId:', blogId);
   
   utils.get(options, function(res) {
+    var contentExp = /<div class="bct fc05 fc11 nbw-blog ztag">([\s\S]+?)<\/div>/; // Use the question mark(?) to avoid greediness.
+    var contentMatch = res.match(contentExp);
+    if (!contentMatch || !contentMatch[1]) {
+      console.warn("Could not find the blog content. url:", url);
+    }
+
     var articleObj = {};
     var t1 = res.split('<textarea name="js">')[1];
     if( !t1) {
@@ -160,6 +168,9 @@ function getArticleByLink(url) {
         t3 = t2.substring(7);
         
     eval('articleObj = ' + t3);
+    if (contentMatch && contentMatch[1]) {
+      articleObj.blogContent = contentMatch[1];
+    }
     var blogFile = './data/' + articleObj.publishTime + '.json';
     
     fs.writeFile(blogFile, JSON.stringify(articleObj), function(err) {
