@@ -41,7 +41,7 @@ exports.post = function(options, successCallback, errorCallback) {
   };
   var mergedOptions = merge(defaultOption, options);
   var req = http.request(mergedOptions, function(res) {
-    console.log('STATUS: ' + res.statusCode, 'HEADERS: ' + JSON.stringify(res.headers));
+    //console.log('STATUS: ' + res.statusCode, 'HEADERS: ' + JSON.stringify(res.headers));
 
     if (!mergedOptions.encoding || mergedOptions.encoding === "utf8") {
       res.setEncoding('utf8');
@@ -69,6 +69,11 @@ exports.post = function(options, successCallback, errorCallback) {
       chunks.push(chunk);
     });
     resObj.on('end', function() {
+      // If the status code is not 200, call the errorCallback function.
+      if (res.statusCode !== 200)  {
+        errorCallback && errorCallback(new Error(res.statusMessage));
+        return ;
+      }
       successCallback && successCallback(chunks.join(''));
     })
   });
