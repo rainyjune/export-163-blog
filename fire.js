@@ -144,7 +144,11 @@ function getArticleByLink(url) {
   var options = {
     hostname: hostname,
     path: '/' + url,
-    encoding: 'GBK'
+    encoding: 'GBK',
+    headers: {
+      // The User-Agent header is required because the missing it will cause HTTP 403 Forbidden errors sometimes.
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36'
+    }
   };
   //console.log('url:', url);
   var blogId = url.split('/').pop();
