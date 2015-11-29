@@ -42,7 +42,7 @@ utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) 
   eval("authorObj=" + authorMatch[1].trim());
   userId = authorObj.userId;
   
-  count = overviewObj.c.map(function(category){
+  count = overviewObj.a.map(function(category){
       return category.count;
     }).reduce(function(a, b) {
       return a + b;
