@@ -37,6 +37,8 @@ utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) 
   var authorMatch = res.match(authorExp);
   console.log("authorMatch:", authorMatch[1]);
   
+  // If the author information could not be retrieved, exit.
+  // This means there is something wrong on the page, or Netease had modified the page template.
   if (!authorMatch || !authorMatch[1]) {
     console.error("Could not get the author's information.");
     return;
