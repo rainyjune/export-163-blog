@@ -22,6 +22,8 @@ var authorFile = './data/author.json';
 utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) {
   var overviewExp = /<textarea name="js">([^<]+)<\/textarea>/;
   var overviewMatch = res.match(overviewExp);
+  // If the analytics data could not be found on the page, exit.
+  // This may happens when you don't have permission to access the blog.
   if (!overviewMatch || !overviewMatch[1]) {
     console.warn("No overview data found. exit.");
     return;
