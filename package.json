@@ -1,6 +1,8 @@
 {
   "name": "export-163-blog",
   "version": "0.1.0",
+  "description": "Export a copy of your blog's posts from NetEase Blog right now!",
+  "main": "fire.js",
   "license": "MIT",
   "repository": {
     "type": "git",
