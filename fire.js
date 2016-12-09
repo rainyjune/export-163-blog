@@ -5,6 +5,9 @@ var count = 0; // How many articles in the blog?
 var pageSize = 10; // How many articles in each page? 
 var pages = 0; // How many pages are there in the blog?
 
+// You can place your cookie here.
+var cookie = "";
+
 if (!process.argv[2]) {
   console.error("Blog name must be passed.");
   return ;
@@ -19,7 +22,15 @@ var overviewFile = './data/overview.json';
 var authorFile = './data/author.json';
 
 // Step 1: Get overview data.
-utils.get({ hostname: hostname, path: '/blog', encoding: 'GBK' }, function(res) {
+var indexPageOption = { hostname: hostname, path: '/blog', encoding: 'GBK' };
+
+if (cookie) {
+  indexPageOption.headers = {
+    'Cookie': cookie
+  };
+}
+console.log('indexPageOption:', indexPageOption);
+utils.get(indexPageOption, function(res) {
   var overviewExp = /<textarea name="js">([^<]+)<\/textarea>/;
   var overviewMatch = res.match(overviewExp);
   // If the analytics data could not be found on the page, exit.
@@ -111,7 +122,7 @@ function getListPagePromise(pageIndex) {
     }
     var postDataStr = postDataArr.join('\n');
     
-    utils.post({
+    var postOption = {
       hostname: hostname,
       path: apiGetBlogPath,
       encoding: 'GBK',
@@ -132,7 +143,13 @@ function getListPagePromise(pageIndex) {
         'Content-Type': 'text/plain',
         'Content-Length': postDataStr.length
       }
-    }, function(res){
+    };
+    
+    if (cookie) {
+      postOption.headers.Cookie = cookie;
+    }
+    
+    utils.post(postOption, function(res){
       
       var pattern = /permalink\s*=\s*"blog\/static\/\d+";/g;
       var links =  res.match(pattern);
@@ -163,6 +180,10 @@ function getArticleByLink(url) {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36'
     }
   };
+  
+  if (cookie) {
+    options.headers.Cookie = cookie;
+  }
   //console.log('url:', url);
   var blogId = url.split('/').pop();
   blogId = blogId.substring(0, blogId.length -2);
