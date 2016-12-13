@@ -1,7 +1,9 @@
 var utils = require('./utils.js');
 var fs = require('fs');
+var beautify = require('js-beautify').js_beautify;
 
 var config = require('./config.js');
+var beautify_options = require('./beautify_options.js');
 
 var count = 0; // How many articles in the blog?
 var pageSize = 10; // How many articles in each page? 
@@ -91,13 +93,13 @@ utils.get(indexPageOption, function(res) {
   
   fs.exists(overviewFile, function (exists) {
     if(!exists) {
-      fs.writeFile(overviewFile, JSON.stringify(overviewObj));
+      fs.writeFile(overviewFile, beautify(JSON.stringify(overviewObj), beautify_options));
     }
   });
   
   fs.exists(authorFile, function (exists) {
     if(!exists) {
-      fs.writeFile(authorFile, JSON.stringify(authorObj));
+      fs.writeFile(authorFile, beautify(JSON.stringify(authorObj), beautify_options));
     }
   });
 }, function(e) {
