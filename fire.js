@@ -1,21 +1,22 @@
 var utils = require('./utils.js');
 var fs = require('fs');
 
+var config = require('./config.js');
+
 var count = 0; // How many articles in the blog?
 var pageSize = 10; // How many articles in each page? 
 var pages = 0; // How many pages are there in the blog?
 
-// You can place your cookie here.
-var cookie = "";
+var cookie = config.cookie;
 
-if (!process.argv[2]) {
+if (!config.username) {
   console.error("Blog name must be passed.");
   return ;
 }
 
 // TODO : verification the blog name.
 var userId;
-var hostname = '{username}.blog.163.com'.replace('{username}', process.argv[2]);
+var hostname = '{username}.blog.163.com'.replace('{username}', config.username);
 var apiURL = 'api.blog.163.com';
 var apiGetBlogPath = '/{username}/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr'.replace('{username}', process.argv[2]);
 var overviewFile = './data/overview.json';
