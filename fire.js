@@ -1,6 +1,9 @@
+"use strict";
 var utils = require('./utils.js');
 var fs = require('fs');
 var beautify = require('js-beautify').js_beautify;
+var request = require('request').defaults({jar: true});
+var iconvlite = require('iconv-lite');
 
 var config = require('./config.js');
 var beautify_options = require('./beautify_options.js');
@@ -18,24 +21,37 @@ if (!config.username) {
 
 // TODO : verification the blog name.
 var userId;
-var hostname = '{username}.blog.163.com'.replace('{username}', config.username);
-var apiURL = 'api.blog.163.com';
-var apiGetBlogPath = '/{username}/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr'.replace('{username}', process.argv[2]);
+var hostname = 'http://{username}.blog.163.com'.replace('{username}', config.username);
+var apiURL = 'http://api.blog.163.com';
+var apiGetBlogPath = '/{username}/dwr/call/plaincall/BlogBeanNew.getBlogs.dwr'.replace('{username}', config.username);
 var overviewFile = './data/overview.json';
 var authorFile = './data/author.json';
 
 // Step 1: Get overview data.
-var indexPageOption = { hostname: hostname, path: '/blog', encoding: 'GBK' };
+var indexPageOption = {
+  url: hostname + '/blog',
+  encoding: null // The body is returned as a Buffer
+};
 
 if (cookie) {
   indexPageOption.headers = {
     'Cookie': cookie
   };
 }
-console.log('indexPageOption:', indexPageOption);
-utils.get(indexPageOption, function(res) {
+//console.log('indexPageOption:', indexPageOption);
+
+request(indexPageOption, function(error, response, body) {
+  if (!error && response.statusCode == 200) {
+    var responseBody = iconvlite.decode(body, 'GBK'); // Convert from an encoded buffer to string.
+    parseIndexPage(responseBody);
+  } else {
+    console.log('Error:', error);
+  }
+});
+
+function parseIndexPage(body) {
   var overviewExp = /<textarea name="js">([^<]+)<\/textarea>/;
-  var overviewMatch = res.match(overviewExp);
+  var overviewMatch = body.match(overviewExp);
   // If the analytics data could not be found on the page, exit.
   // This may happens when you don't have permission to access the blog.
   if (!overviewMatch || !overviewMatch[1]) {
@@ -48,7 +64,7 @@ utils.get(indexPageOption, function(res) {
   
   var authorObj = {};
   var authorExp = /UD\.host\s*=\s*({([^;])+)/;
-  var authorMatch = res.match(authorExp);
+  var authorMatch = body.match(authorExp);
   console.log("authorMatch:", authorMatch[1]);
   
   // If the author information could not be retrieved, exit.
@@ -67,12 +83,28 @@ utils.get(indexPageOption, function(res) {
   });
   console.log('Blog posts:', count);
   
-  pages = Math.ceil(count / pageSize);
-
+  pages = Math.ceil(count / pageSize);  
+  
+  // Save to overview.json
+  fs.exists(overviewFile, function (exists) {
+    if(!exists) {
+      fs.writeFile(overviewFile, beautify(JSON.stringify(overviewObj), beautify_options));
+    }
+  });
+  
+  // Save to author.json
+  fs.exists(authorFile, function (exists) {
+    if(!exists) {
+      fs.writeFile(authorFile, beautify(JSON.stringify(authorObj), beautify_options));
+    }
+  });
+  
   var listPagePromises = [];
   for ( var i = 0; i < pages; i++) {
     listPagePromises.push(getListPagePromise(i));
   }
+  
+  //return false;//////////////////////////////////////////////
   
   Promise.all(listPagePromises).then(function(results) {
     // All list pages loaded.
@@ -91,20 +123,7 @@ utils.get(indexPageOption, function(res) {
     console.error('list page error:', error);
   });
   
-  fs.exists(overviewFile, function (exists) {
-    if(!exists) {
-      fs.writeFile(overviewFile, beautify(JSON.stringify(overviewObj), beautify_options));
-    }
-  });
-  
-  fs.exists(authorFile, function (exists) {
-    if(!exists) {
-      fs.writeFile(authorFile, beautify(JSON.stringify(authorObj), beautify_options));
-    }
-  });
-}, function(e) {
-  console.log('Get url ['+ hostname + '/blog] err:', e.message);
-});
+}
 
 function getListPagePromise(pageIndex) {
   return new Promise(function(resolve, reject) {
@@ -126,11 +145,9 @@ function getListPagePromise(pageIndex) {
     var postDataStr = postDataArr.join('\n');
     
     var postOption = {
-      hostname: hostname,
-      path: apiGetBlogPath,
-      encoding: 'GBK',
-      data: postData,
-      dataString: postDataStr,
+      url: hostname + apiGetBlogPath,
+      form: postData,
+      gzip: true,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36',
         'Referer': 'http://api.blog.163.com/crossdomain.html?t=20100205',
@@ -143,8 +160,8 @@ function getListPagePromise(pageIndex) {
         'Host': 'api.blog.163.com',
         'Origin': 'http://api.blog.163.com',
         'Pragma': 'no-cache',
-        'Content-Type': 'text/plain',
-        'Content-Length': postDataStr.length
+        'Content-Type': 'text/plain'
+        //'Content-Length': postDataStr.length
       }
     };
     
@@ -152,18 +169,22 @@ function getListPagePromise(pageIndex) {
       postOption.headers.Cookie = cookie;
     }
     
-    utils.post(postOption, function(res){
-      
-      var pattern = /permalink\s*=\s*"blog\/static\/\d+";/g;
-      var links =  res.match(pattern);
-      if (!links) {
-        console.warn("Links not found.", postData);
-        resolve([]);
+    request.post(postOption, function(err, httpResponse, body){
+      if (err) {
+        reject(err);
       } else {
-        resolve(links);
+        //let res = body.
+        //console.log('body:', body)
+        //return false;
+        var pattern = /permalink\s*=\s*"blog\/static\/\d+";/g;
+        var links =  body.match(pattern);
+        if (!links) {
+          console.warn("Links not found.", postData);
+          resolve([]);
+        } else {
+          resolve(links);
+        }
       }
-    }, function(e) {
-      reject(e);
     });
   });
 }
@@ -175,9 +196,11 @@ function getArticleByLink(url) {
   }
   url = urlParts[1];
   var options = {
-    hostname: hostname,
-    path: '/' + url,
-    encoding: 'GBK',
+    url: hostname + '/' + url,
+    //hostname: hostname,
+    //path: '/' + url,
+    //encoding: 'GBK',
+    encoding: null,
     headers: {
       // The User-Agent header is required because the missing it will cause HTTP 403 Forbidden errors sometimes.
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.86 Safari/537.36'
@@ -192,7 +215,8 @@ function getArticleByLink(url) {
   blogId = blogId.substring(0, blogId.length -2);
   //console.log('blogId:', blogId);
   
-  utils.get(options, function(res) {
+  request(options, function(error, response,  body) {
+    let res = iconvlite.decode(body, 'GBK');
     var contentExp = /<div class="bct fc05 fc11 nbw-blog ztag">([\s\S]+?)<\/div>/; // Use the question mark(?) to avoid greediness.
     var contentMatch = res.match(contentExp);
     if (!contentMatch || !contentMatch[1]) {
@@ -214,7 +238,7 @@ function getArticleByLink(url) {
     }
     var blogFile = './data/' + articleObj.publishTime + '.json';
     
-    fs.writeFile(blogFile, JSON.stringify(articleObj), function(err) {
+    fs.writeFile(blogFile, beautify(JSON.stringify(articleObj), beautify_options), function(err) {
       if (err) throw err;
       //console.log('saved：' + blogFile);
     });
