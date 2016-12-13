@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "iconv-lite": "~0.4.13",
+    "js-beautify": "^1.6.4",
     "request": "^2.79.0"
   }
 }
