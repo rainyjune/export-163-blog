@@ -12,6 +12,7 @@
     "url": "https://github.com/rainyjune/export-163-blog/issues"
   },
   "devDependencies": {
-    "iconv-lite": "~0.4.13"
+    "iconv-lite": "~0.4.13",
+    "request": "^2.79.0"
   }
 }
